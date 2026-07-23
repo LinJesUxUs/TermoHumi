@@ -26,6 +26,7 @@ struct aht10_data {
 class AHT10 {
     static uint8_t recvbuf[6];
     static uint32_t tempraw, humiraw;
+    static uint8_t check_buf;
     static uint8_t start();
     static void stop();
     static void set_twcr(const uint8_t& _byte=0);
@@ -36,52 +37,12 @@ class AHT10 {
     static uint8_t measure();
     static uint8_t recv();
 public:
+    static bool onecheck;
     static aht10_data value;
     static uint8_t begin();
     static uint8_t resetSensor();
     static uint8_t read();
+    static void set_value(const int8_t& _t, const uint8_t& _h);
 };
 
-// AHT10::tempraw = 0;
-// AHT10::humiraw = 0;
-// AHT10::recvbuf = {0,0,0,0,0,0};
-
 #endif
-
-// Certainly! Here's the completed AHT10 class with the TWI (Two-Wire Interface) library for I2C communication and implementation of the initialization sequence, reset sequence, and reading humidity and temperature data from the sensor:
-
-// class AHT10 {
-// private:
-//     const uint8_t I2C_ADDRESS = 0x38;
-
-
-// public:
-
-//     bool readData(float &humidity, float &temperature) {
-//         // Measure command
-//         i2cStart();
-//         i2cWriteByte(I2C_ADDRESS << 1);
-//         i2cWriteByte(0xAC);
-//         i2cWriteByte(0x33);
-//         i2cWriteByte(0x00);
-//         i2cStop();
-//         _delay_ms(75);
-
-//         // Read data
-//         i2cStart();
-//         i2cWriteByte((I2C_ADDRESS << 1) | 0x01);
-        
-//         uint8_t msb = i2cReadByte(true);
-//         uint8_t lsb = i2cReadByte(true);
-//         uint8_t xsb = i2cReadByte(false);
-        
-//         uint8_t crc = i2cReadByte(false);
-        
-//         i2cStop();
-
-//         // Check CRC, calculate humidity and temperature
-//         // TODO: Implement CRC check and humidity/temperature calculation
-
-//         return true; // Return true if data read successfully
-//     }
-// };

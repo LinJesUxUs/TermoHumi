@@ -23,69 +23,75 @@ bool temp_or_humi = true; // TRUE=temperature
 bool temp_sign;
 
 void getTempHumi(){
-	while (!AHT10::read());
-	if (AHT10::value.temp < 0 )
-		temp_sign = 1;
-	else
-		temp_sign = 0;
-	for (uint8_t i = 0; i < SEGMENT_NUM-1; i++){
-		tempHumi.temp_segments[i] = numberSegments[AHT10::value.temp % 10];
-		tempHumi.humi_segments[i] = numberSegments[AHT10::value.humi % 10];
-		AHT10::value.temp /= 10;
-		AHT10::value.humi /= 10;
-		if(i==2&&temp_sign)
-			tempHumi.temp_segments[i] = charSegments[2];
-	}
+    while (AHT10::read());
+
+    int8_t t = AHT10::value.temp;
+    uint8_t h = AHT10::value.humi;
+    
+    if (t < 0 ) {
+        temp_sign = true;
+        t = -t;
+    } else {
+        temp_sign = false;
+    }
+    
+    for (uint8_t i = 0; i < SEGMENT_NUM - 1; i++){
+        tempHumi.temp_segments[i] = numberSegments[t % 10];
+        tempHumi.humi_segments[i] = numberSegments[h % 10];
+        t /= 10;
+        h /= 10;
+    }
+    if(temp_sign)
+        tempHumi.temp_segments[2] = charSegments[2];
 }
 
 void timer_init(){
-  TCCR1B |= (1<<WGM12);
-  TIMSK |= (1<<OCIE1A);
-  OCR1AH = 0b00000000;
-  OCR1AL = 0b01000001;
-  TCCR1B |= (1<<CS11) | (1<<CS10) ;
+    TCCR1B |= (1<<WGM12);
+    TIMSK |= (1<<OCIE1A);
+    OCR1AH = 0b00000000;
+    OCR1AL = 0b01000001;
+    TCCR1B |= (1<<CS11) | (1<<CS10) ;
 }
 
 void aht10_init(){
-	AHT10::value = {0,0};
-	while(AHT10::begin()){
-		AHT10::resetSensor();
+    while(AHT10::begin()){
+        AHT10::resetSensor();
 	}
 }
 
 ISR (TIMER1_COMPA_vect) {
-  PORTC |= 0x0F;
-  if (counter == SEGMENT_NUM-1)
-    PORTD = charSegments[temp_or_humi];
-  else {
+    PORTC |= 0x0F;
+    if (counter == SEGMENT_NUM-1)
+        PORTD = charSegments[temp_or_humi];
+    else {
     if (temp_or_humi)
-      PORTD = tempHumi.temp_segments[counter];
+        PORTD = tempHumi.temp_segments[counter];
     else
-      PORTD = tempHumi.humi_segments[counter];
-  }
-  PORTC ^= 1 << counter;
-  if (counter == SEGMENT_NUM-1 )
-    counter = 0;
-  else
-    counter++;
+        PORTD = tempHumi.humi_segments[counter];
+    }
+    PORTC ^= 1 << counter;
+    if (counter == SEGMENT_NUM-1 )
+        counter = 0;
+    else
+        counter++;
 }
 
 int main() {
-  sei();
-  timer_init();
-  aht10_init();
-  for ( uint8_t i = 0; i < SEGMENT_NUM; i++ ){
-    DDRC |= (1 << i);
-  }
-  DDRD = 0b11111111;
-
-  while(true){
-    getTempHumi();
-    if ( PERIOD_SEC <= period_temphumi_counter++){
-      period_temphumi_counter = 0;
-      temp_or_humi = !temp_or_humi;
+    sei();
+    timer_init();
+    aht10_init();
+    for ( uint8_t i = 0; i < SEGMENT_NUM; i++ ){
+        DDRC |= (1 << i);
     }
-    _delay_ms(500);
-  }
-  return 0;
+    DDRD = 0b11111111;
+    
+    while(true){
+        getTempHumi();
+        if ( PERIOD_SEC <= period_temphumi_counter++){
+            period_temphumi_counter = 0;
+            temp_or_humi = !temp_or_humi;
+        }
+        _delay_ms(500);
+    }
+    return 0;
 }
