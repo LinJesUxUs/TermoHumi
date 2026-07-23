@@ -1,4 +1,9 @@
 *.sublime-project
 *.sublime-workspace
-obj
-bin
+obj/
+bin/
+.deppp
+*.elf
+*.hex
+*.map
+*.lst
