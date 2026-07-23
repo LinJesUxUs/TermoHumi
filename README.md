@@ -143,4 +143,3 @@ This project is released into the public domain. Feel free to use, modify, and d
 ---
 
 **Author's Note:** This project was developed as an educational exercise in AVR C++ programming, I2C communication, and interrupt-driven display multiplexing. Contributions and suggestions are welcome.
-```
