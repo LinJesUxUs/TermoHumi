@@ -3,7 +3,7 @@
 
 // PORT B for programming
 // PORT C for read AHT10 & select sector
-// PORT D for flash leds
+// PORT D for flash leds "dFABGCDE" "3.10.11.7.5.4.2.1"
 
 uint8_t numberSegments[10] = {
     0b01110111, 0b00010100, 0b00111011, 0b00111110, 0b01011100,
@@ -43,6 +43,10 @@ void getTempHumi(){
     }
     if(temp_sign)
         tempHumi.temp_segments[2] = charSegments[2];
+    else if (tempHumi.temp_segments[2] == numberSegments[0])
+	tempHumi.temp_segments[2] = 0b00000000;
+    if (tempHumi.humi_segments[2] == numberSegments[0])
+	tempHumi.humi_segments[2] = 0b00000000;
 }
 
 void timer_init(){
@@ -60,16 +64,16 @@ void aht10_init(){
 }
 
 ISR (TIMER1_COMPA_vect) {
-    PORTC |= 0x0F;
+    PORTC |= 0x0F; // b00001111 Turn off all segments
     if (counter == SEGMENT_NUM-1)
-        PORTD = charSegments[temp_or_humi];
+        PORTD = charSegments[temp_or_humi]; // Display °C or % sign
     else {
-    if (temp_or_humi)
-        PORTD = tempHumi.temp_segments[counter];
-    else
-        PORTD = tempHumi.humi_segments[counter];
+        if (temp_or_humi)
+            PORTD = tempHumi.temp_segments[counter];
+        else
+            PORTD = tempHumi.humi_segments[counter];
     }
-    PORTC ^= 1 << counter;
+    PORTC ^= 1 << counter; // Turn on the current segment ( b00111111 ^ b00000100 = b00111011 )
     if (counter == SEGMENT_NUM-1 )
         counter = 0;
     else
