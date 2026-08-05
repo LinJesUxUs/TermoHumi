@@ -115,7 +115,7 @@ uint8_t AHT10::read(){
     tempraw = ( ( static_cast<uint32_t>(recvbuf[3]) & 15) << 16) | ( static_cast<uint32_t>(recvbuf[4]) << 8) | recvbuf[5];
     humiraw = ( static_cast<uint32_t>(recvbuf[1]) << 12) | ( static_cast<uint32_t>(recvbuf[2]) << 4) | ( recvbuf[3] >> 4);
 
-    value.temp = static_cast<int16_t>( ( static_cast<int32_t>(tempraw) * 2000UL / 1048576UL ) - 50);
+    value.temp = static_cast<int16_t>( ( static_cast<int32_t>(tempraw) * 2000UL / 1048576UL ) - 500);
     value.humi = static_cast<int16_t>( static_cast<int32_t>(humiraw) * 1000UL / 1048576UL );
     return 0;
 }
