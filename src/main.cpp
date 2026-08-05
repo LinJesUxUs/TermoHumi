@@ -22,7 +22,7 @@ bool temp_or_humi = true;                // TRUE=temperature
 uint8_t counter = 0;                     // Counter for multiplexing segments
 uint8_t period_temphumi_counter = 0;     // Counter for switching between temperature and humidity display
 volatile uint8_t current_brightness = 0; // Current brightness level (0-3). Reads from EEPROM on startup. Volatile to ensure it's updated in ISR context.
-volatile uint8_t timer1_ticks = 0;      // Interrupt based clock.
+volatile uint16_t timer1_ticks = 0;      // Interrupt based clock.
 
 // Structure to hold the segments for temperature and humidity
 struct display_buf {
@@ -216,16 +216,16 @@ int main() {
     }
     DDRD = 0b11111111;
 
-    int16_t last_tick = 0;
-    const uint16_t ticks_per_500ms = 237; // Timer1: (65+1)*64/2MHz ≈ 2.112ms per tick => ~237 ticks per 500ms
+    int32_t last_tick = 0;
+    const uint16_t ticks_per_750ms = 355; // Timer1: (65+1)*64/2MHz ≈ 2.112ms per tick => ~355 ticks per 750ms
     
     while (true) {
         handle_brightness_button();
         
-        int16_t now = timer1_ticks;
-        int16_t nowDiff = now - last_tick;
-        if (nowDiff < 0) nowDiff += 256; // 
-        if (nowDiff >= ticks_per_500ms) {
+        int32_t now = static_cast<int32_t>(timer1_ticks);
+        int32_t nowDiff = now - last_tick;
+        if (nowDiff < 0) nowDiff += 0xFFFF; // 
+        if (nowDiff >= static_cast<int32_t>(ticks_per_750ms) ) {
             last_tick = now;
             getTempHumi();
             period_temphumi_counter++;
