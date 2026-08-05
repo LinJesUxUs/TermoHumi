@@ -8,7 +8,7 @@ SRCDIR := src
 
 SRCS := $(addprefix $(SRCDIR)/,main.cpp AHT10.cpp)
 
-HEADER := $(addprefix $(SRCDIR)/,AHT10.h structs.h includes.h)
+HEADER := $(addprefix $(SRCDIR)/,AHT10.h common.h)
 
 OBJDIR := obj
 
