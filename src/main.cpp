@@ -49,7 +49,8 @@ uint8_t numberSegments[10] = {
 
 bool button_pressed() {
     ADCSRA |= (1 << ADSC);          // start conversion
-    while (ADCSRA & (1 << ADSC));   // wait for completion
+    uint16_t t = 5000;
+    while ((ADCSRA & (1<<ADSC)) && --t); // wait for completion
     return ADCH > BUTTON_THRESHOLD; // true if above 1/3 VCC
 }
 
@@ -59,11 +60,11 @@ int16_t find_last_brightness() {
     int16_t left = 0;
     int16_t right = EEPROM_SIZE - 1;
     int16_t last = -1;
-    
+
     while (left <= right) {
         int16_t mid = (left + right) / 2;
         uint8_t val = eeprom_read_byte( (uint8_t*)mid );
-        
+
         if (val != 0xFF) {
             last = mid;         // candidate for the last record
             left = mid + 1;     // search to the right
@@ -95,9 +96,9 @@ void save_brightness(uint8_t level)
 void handle_brightness_button() {
     static bool last_state = false;
     static uint8_t debounce = 0;
-    
+
     bool state = button_pressed();
-    
+
     if (state != last_state) {
         debounce++;
         if (debounce > 10) {        // ~10 check cycles = ~50 ms
@@ -160,20 +161,14 @@ void getTempHumi()
 
     int16_t t = AHT10::value.temp;
     int16_t h = AHT10::value.humi;
-    
+
     setDisplayDataArray(tempHumi.temp_segments, t);
     setDisplayDataArray(tempHumi.humi_segments, h);
 }
 
 void init() {
     sei(); // Enable global interrupts
-    
-    // ADC initialization for button press detection
-    ADCSRA = (1 << ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0); // Enable ADC, prescaler 128 (125 kHz at 16 MHz)
-    ADMUX = (1 << ADLAR) | (BUTTON_ADC_CHANNEL & 0x07);                // Select channel, 8-bit conversion (ADLAR=1), reference AVCC
-    
-    load_brightness();  // restore brightness from EEPROM
-    
+
     // Timer2 for PWM brightness control
     TCCR2 = (1 << WGM20) | (1 << WGM21) | (1 << COM21) | (1 << CS20); // Fast PWM, non-inverting mode, no prescaler. Frequency = F_CPU / 256 = 7.8125 kHz (for 2 MHz clock)
     DDRB |= (1 << PB3);                                               // Set PB3 (OC2) as output for PWM
@@ -185,7 +180,17 @@ void init() {
     OCR1AH = 0b00000000;              // Set OCR1A for 1 kHz interrupt frequency (assuming 2 MHz clock and prescaler of 64)
     OCR1AL = 0b01000001;              // 0x41 = 65 decimal, 2 MHz / (64 * 65) ≈ 480.77 Hz, adjust as needed
     TCCR1B |= (1<<CS11) | (1<<CS10) ; // Set prescaler to 64
-    
+
+    // ADC initialization for button press detection
+    ADCSRA = (1 << ADEN) | (1 << ADPS2);                                // Enable ADC, prescaler 16 (2 MHz / 16 = 125 kHz)
+    ADMUX = (1 << ADLAR) | (1 << REFS0) | (BUTTON_ADC_CHANNEL & 0x07);  // Select channel, 8-bit conversion (ADLAR=1), reference AVCC
+
+    // Do one dummy conversion after selecting channel to stabilize mux/input
+    ADCSRA |= (1 << ADSC);
+    while (ADCSRA & (1 << ADSC));
+
+    load_brightness();  // restore brightness from EEPROM
+
     // AHT10 initialization
     while(AHT10::begin()) AHT10::resetSensor();
 }
@@ -218,10 +223,10 @@ int main() {
 
     int32_t last_tick = 0;
     const uint16_t ticks_per_750ms = 355; // Timer1: (65+1)*64/2MHz ≈ 2.112ms per tick => ~355 ticks per 750ms
-    
+
     while (true) {
         handle_brightness_button();
-        
+
         int32_t now = static_cast<int32_t>(timer1_ticks);
         int32_t nowDiff = now - last_tick;
         if (nowDiff < 0) nowDiff += 0xFFFF; // 
