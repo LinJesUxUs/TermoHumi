@@ -57,14 +57,14 @@ uint8_t AHT10::measure(){
     if (send_and_check( AHT10_MEASURE, TW_MT_DATA_ACK) ) return TWI_TWSR;
     if (send_and_check( AHT10_DATA0, TW_MT_DATA_ACK) ) return TWI_TWSR;
     if (send_and_check( AHT10_DATA1, TW_MT_DATA_ACK) ) return TWI_TWSR;
-    
+
     stop();
     return 0;
 }
 
 uint8_t AHT10::recv(){
     if (start()) return TWI_TWSR;
-    
+
     if (send_and_check( AHT10_ADDRESS << 1 | TW_READ, TW_MR_SLA_ACK) ) return TWI_TWSR;
 
     for (uint8_t i=0; i < 5; i++)
@@ -89,7 +89,7 @@ uint8_t AHT10::begin() {
 
     if (send_and_check( 0x08, TW_MT_DATA_ACK)) return TWI_TWSR;    // first byte of initialization command
     if (send_and_check( 0x00, TW_MT_DATA_ACK)) return TWI_TWSR;    // second byte of initialization command
-    
+
     stop();
     _delay_ms(75); // Wait for sensor to initialize
     return 0;
@@ -100,7 +100,7 @@ uint8_t AHT10::resetSensor() {
 
     if (send_and_check( AHT10_ADDRESS << 1 | TW_WRITE, TW_MT_SLA_ACK)) return TWI_TWSR;
     if (send_and_check( AHT10_RESET, TW_MT_DATA_ACK)) return TWI_TWSR;
-    
+
     stop();
     _delay_ms(20);
     return 0;
