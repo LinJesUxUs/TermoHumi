@@ -103,7 +103,7 @@ void handle_brightness_button() {
 
     if (state != last_state) {
         debounce++;
-        if (debounce > 255) {        // ~255 check cycles = ~3.8-7.6 ms
+        if (debounce > 100) {        // Check cycles, depends on main loop.
             if (state) {            // transition 0→1 = press
                 current_brightness += 1;
                 if ( current_brightness >= BRIGHTNESS_LEVELS)
