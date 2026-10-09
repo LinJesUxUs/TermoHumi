@@ -10,6 +10,7 @@
 
 #define PERIOD_SEC 4
 #define SEGMENT_NUM 4
+#define PB2_TIMEOUT_TICKS (12 * F_CPU / (64*65)) // 10 second timeout. F_CPU / (64*65) - Timer1's frequency
 
 // PORT B for programming
 // PORT C for read AHT10 & select sector
@@ -23,6 +24,7 @@ uint8_t counter = 0;                     // Counter for multiplexing segments
 uint8_t period_temphumi_counter = 0;     // Counter for switching between temperature and humidity display
 volatile uint8_t current_brightness = 0; // Current brightness level (0-3). Reads from EEPROM on startup. Volatile to ensure it's updated in ISR context.
 volatile uint16_t timer1_ticks = 0;      // Interrupt based clock.
+volatile uint16_t pb2_timer_counter = 0;  // Counter for PB2 timeout.
 
 // Structure to hold the segments for temperature and humidity
 struct display_buf {
@@ -108,6 +110,8 @@ void handle_brightness_button() {
                     current_brightness = 0;
                 OCR2 = brightness_values[current_brightness];
                 save_brightness(current_brightness);
+                pb2_timer_counter = 0;
+                PORTB &= ~(1 << PB2);
             }
             debounce = 0;
             last_state = state;
@@ -171,7 +175,9 @@ void init() {
 
     // Timer2 for PWM brightness control
     TCCR2 = (1 << WGM20) | (1 << WGM21) | (1 << COM21) | (1 << CS20); // Fast PWM, non-inverting mode, no prescaler. Frequency = F_CPU / 256 = 7.8125 kHz (for 2 MHz clock)
-    DDRB |= (1 << PB3);                                               // Set PB3 (OC2) as output for PWM
+    DDRB |= (1 << PB3)                                                // Set PB3 (OC2) as output for PWM
+         | (1 << PB2);                                                // Set PB2 as output for external indicator
+    PORTB &= ~(1 << PB2);                                             // Ensure PB2 starts low
     OCR2 = brightness_values[current_brightness];                     // Set initial brightness level
 
     // Timer1 for multiplexing display
@@ -197,6 +203,7 @@ void init() {
 
 ISR (TIMER1_COMPA_vect) {
     timer1_ticks += 1;
+    pb2_timer_counter += 1;
 
     PORTC |= 0x0F;              // b00001111 Turn off all segments
     if (counter == SEGMENT_NUM-1)
@@ -226,6 +233,10 @@ int main() {
 
     while (true) {
         handle_brightness_button();
+
+        /* check PB2 timeout (~10s) and set PB2 high when reached */
+        if (pb2_timer_counter >= PB2_TIMEOUT_TICKS)
+            PORTB |= (1 << PB2);
 
         int32_t now = static_cast<int32_t>(timer1_ticks);
         int32_t nowDiff = now - last_tick;
