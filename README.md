@@ -26,6 +26,8 @@ TermoHumi is a compact embedded firmware project for an ATmega8 microcontroller 
 
 | Port | Pin | Function                |
 |------|-----|-------------------------|
+| PB2  |  0  | ON state signal         |
+| PB3  |  0  | PWM brightness          |
 | PC0  |  0  | Digit 1 select          |
 | PC1  |  1  | Digit 2 select          |
 | PC2  |  2  | Digit 3 select          |
@@ -81,12 +83,21 @@ make fclean     # remove all build artifacts
 
 ## Configuration
 
-Edit `src/includes.h` to adjust key parameters:
+Edit next to adjust key parameters:
 
-```c
+```src/common.h
 #define F_CPU 2000000UL       // MCU clock frequency (Hz)
+```
+
+```src/main.cpp
+#define BUTTON_ADC_CHANNEL 6  // 6 for ADC6, 7 for ADC7
+#define BUTTON_THRESHOLD   85 // 1/3 from 255 (8-bit conversion)
+#define BRIGHTNESS_LEVELS 4
+#define EEPROM_SIZE 512
+
 #define PERIOD_SEC 4          // Seconds between temperature/humidity display toggle
 #define SEGMENT_NUM 4         // Number of 7-segment digits
+#define PB2_TIMEOUT_TICKS (12 * F_CPU / (64*65)) // 10 second timeout. F_CPU / (64*65) - Timer1's frequency
 ```
 
 The I2C bus speed is calculated in `AHT10::begin()` based on `F_CPU` (default: 100 kHz).
@@ -99,8 +110,7 @@ The I2C bus speed is calculated in `AHT10::begin()` based on `F_CPU` (default: 1
 │   ├── main.cpp          # Application entry point, display logic, timer ISR
 │   ├── AHT10.h           # AHT10 sensor driver class declaration
 │   ├── AHT10.cpp         # AHT10 sensor driver implementation (I2C routines)
-│   ├── structs.h         # Shared data structures (display buffer, sensor data)
-│   └── includes.h        # Global definitions and MCU-specific includes
+│   └── common.h          # Global definitions and MCU-specific includes
 ├── Makefile              # Build system
 └── README.md
 ```
@@ -124,7 +134,7 @@ The I2C bus speed is calculated in `AHT10::begin()` based on `F_CPU` (default: 1
 - **Temperature:** `[sign] XX` (e.g., ` 24` for +24°C, `- 5` for -5°C)
 - **Humidity:** ` XX` (e.g., ` 63` for 63%)
 
-The 4th digit (rightmost) is used for the degree/humidity symbol or minus sign.
+The 4th digit (rightmost) is used for the degree/humidity symbol, 3rd (optional) minus sign.
 
 ## Troubleshooting
 
@@ -143,3 +153,5 @@ This project is released into the public domain. Feel free to use, modify, and d
 ---
 
 **Author's Note:** This project was developed as an educational exercise in AVR C++ programming, I2C communication, and interrupt-driven display multiplexing. Contributions and suggestions are welcome.
+
+####TODO: Case model

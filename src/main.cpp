@@ -8,11 +8,11 @@
 #define BRIGHTNESS_LEVELS 4
 #define EEPROM_SIZE 512
 
-#define PERIOD_SEC 4
-#define SEGMENT_NUM 4
+#define PERIOD_SEC 4          // Seconds between temperature/humidity display toggle
+#define SEGMENT_NUM 4         // Number of 7-segment digits
 #define PB2_TIMEOUT_TICKS (12 * F_CPU / (64*65)) // 10 second timeout. F_CPU / (64*65) - Timer1's frequency
 
-// PORT B for programming
+// PORT B for programming, PB3 - PWM brightness, PB2 - ON state signal
 // PORT C for read AHT10 & select sector
 // PORT D for flash leds "dFABGCDE" "3.10.11.7.5.4.2.1"
 
@@ -176,7 +176,7 @@ void init() {
     // Timer2 for PWM brightness control
     TCCR2 = (1 << WGM20) | (1 << WGM21) | (1 << COM21) | (1 << CS20); // Fast PWM, non-inverting mode, no prescaler. Frequency = F_CPU / 256 = 7.8125 kHz (for 2 MHz clock)
     DDRB |= (1 << PB3)                                                // Set PB3 (OC2) as output for PWM
-         | (1 << PB2);                                                // Set PB2 as output for external indicator
+         | (1 << PB2);                                                // Set PB2 as output for ON state signal
     PORTB &= ~(1 << PB2);                                             // Ensure PB2 starts low
     OCR2 = brightness_values[current_brightness];                     // Set initial brightness level
 
