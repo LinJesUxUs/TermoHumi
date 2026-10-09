@@ -14,6 +14,7 @@ TermoHumi is a compact embedded firmware project for an ATmega8 microcontroller 
 - **Automatic Sensor Initialization** — sends the required calibration command (0xE1, 0x08, 0x00) on startup
 - **Software Reset** — fallback sensor reset if initialization fails
 - **Written in C++** — class-based I2C driver with static members for minimal overhead
+- **Battery** — Designed for a disposable vape batteries
 
 ## Hardware
 
@@ -99,6 +100,8 @@ Edit next to adjust key parameters:
 #define SEGMENT_NUM 4         // Number of 7-segment digits
 #define PB2_TIMEOUT_TICKS (12 * F_CPU / (64*65)) // 10 second timeout. F_CPU / (64*65) - Timer1's frequency
 ```
+
+Brightness levels sets on `brightness_values` in `main.cpp`.
 
 The I2C bus speed is calculated in `AHT10::begin()` based on `F_CPU` (default: 100 kHz).
 

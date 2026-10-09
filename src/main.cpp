@@ -37,7 +37,7 @@ uint8_t charSegments[3] = {
     0b01011101, 0b01100011, 0b00001000
 };
 
-// Brightness levels for PWM (0-3)
+// Brightness levels for PWM (0-3). 255 is minimum brightness, 0 is maximum.
 const uint8_t brightness_values[BRIGHTNESS_LEVELS] = {
     254, 248, 216, 64
 };
