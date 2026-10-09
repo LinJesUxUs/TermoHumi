@@ -39,7 +39,7 @@ uint8_t charSegments[3] = {
 
 // Brightness levels for PWM (0-3)
 const uint8_t brightness_values[BRIGHTNESS_LEVELS] = {
-    255, 170, 85, 20
+    254, 248, 216, 64
 };
 
 // Segments for digits 0-9 on a 7-segment display (assuming common cathode)
